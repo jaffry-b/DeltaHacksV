@@ -93,7 +93,9 @@ with tf.device("gpu"):
     reset_graph()
 
     n_inputs = env.observation_space.shape[0]
-    n_hidden = 10
+    n1_hidden = 10
+    n2_hidden = 10
+    n3_hidden = 10
     n_outputs = 7# 7 stuff
     initializer = tf.variance_scaling_initializer()
 
@@ -102,9 +104,14 @@ with tf.device("gpu"):
     #build
 
     X = tf.placeholder(tf.float32, shape=[None,n_inputs])
-    hidden = tf.layers.dense(X, n_hidden, activation=tf.nn.elu,
+    hidden1 = tf.layers.dense(X, n1_hidden, activation=tf.nn.elu,
                              kernel_initializer=initializer)
-    logits = tf.layers.dense(hidden, n_outputs,
+    hidden2 = tf.layers.dense(hidden1,n2_hidden ,activation=tf.nn.elu,
+                            kernel_initializer=initializer)
+    hidden3 = tf.layers.dense(hidden2,n3_hidden, activation=tf.nn.elu,
+                            kernel_initializer=initializer)
+
+    logits = tf.layers.dense(hidden3, n_outputs,
                             kernel_initializer=initializer)
     outputs = tf.nn.softmax(logits)
 
@@ -147,7 +154,7 @@ n_games_per_update = 1
 n_max_steps = 1000
 n_iterations = 250
 save_iterations = 10
-discount_rate = 0.30
+discount_rate = 0.95
 
 with tf.Session() as sess:
     init.run()
@@ -171,8 +178,6 @@ with tf.Session() as sess:
                 env.render()
             all_rewards.append(current_rewards)
             all_gradients.append(current_gradients)
-            print("Game Done!\n")
-            print(current_rewards, "\n")
         all_rewards = discnormrewards(all_rewards)
         feed_dict = {}
         for var_index, gradient_placeholder in enumerate(gradient_placeholders):
@@ -182,7 +187,7 @@ with tf.Session() as sess:
             feed_dict[gradient_placeholder] = mean_gradients
         sess.run(training_op, feed_dict=feed_dict)
         if iteration % save_iterations == 0:
-            saver.save(sess, "./my_policy_net_pg.ckpt")
+            saver.save(sess, "./my_policy_net_pg.ckpt"+str(iteration))
 env.close()
 
 
