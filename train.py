@@ -150,7 +150,7 @@ with tf.device("gpu"):
 # In[9]:
 
 
-n_games_per_update = 1
+n_games_per_update = 10
 n_max_steps = 1000
 n_iterations = 250
 save_iterations = 10
@@ -187,7 +187,7 @@ with tf.Session() as sess:
             feed_dict[gradient_placeholder] = mean_gradients
         sess.run(training_op, feed_dict=feed_dict)
         if iteration % save_iterations == 0:
-            saver.save(sess, "./my_policy_net_pg.ckpt"+str(iteration))
+            saver.save(sess, "./"+"iteration_"+Str(iteration)+"_mario".ckpt"+)
 env.close()
 
 
