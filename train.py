@@ -20,17 +20,20 @@ def reward(ninfo, pinfo):
 	# world : N/A
 	# x_pos : move right, plus
 	flag = 0
-	if ninfo['flag_get']:
-		flag = 15
-	if ninfo['life'] != pinfo['life']:
+	if(ninfo['x_pos'] == pinfo['x_pos']):
+		return -100
+	elif ninfo['flag_get']:
+		return 150
+	elif ninfo['life'] != pinfo['life']:
 		return -15
+
 	return ((ninfo['time']-pinfo['time']) + 3*(ninfo['x_pos']-pinfo['x_pos']) + flag)
 
 # 0.95 discount rate
 def discountrewards(rewards):
 	discrewards = numpy.empty(len(rewards))
 	cumreward = 0
-	discrate = 0.95
+	discrate = 0.85
 	for i in reversed(range(len(rewards))):
 		cumreward = rewards[i] + (cumreward * discrate)
 		discrewards[i] = cumreward
@@ -51,7 +54,9 @@ for discrewards in alldiscrewards]
 
 
 
-## Base model to run the game, using random movements
+# In[3]:
+
+
 from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
 import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
@@ -59,23 +64,12 @@ env = gym_super_mario_bros.make('SuperMarioBros-v0')
 env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
 env.reset()
 
-
-# In[3]:
-
-
-from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
-import gym_super_mario_bros
-from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
-env = gym_super_mario_bros.make('SuperMarioBros-v0')
-env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
-
-
 # In[4]:
 
 
 import numpy as np
 
-def reset_graph(seed=69):
+def reset_graph(seed=828):
     tf.reset_default_graph()
     tf.set_random_seed(seed)
     np.random.seed(seed)
@@ -93,8 +87,8 @@ with tf.device("gpu"):
     reset_graph()
 
     n_inputs = env.observation_space.shape[0]
-    n1_hidden = 25
-    n2_hidden = 15
+    n1_hidden = 10
+    n2_hidden = 10
     n3_hidden = 10
     n_outputs = 7# 7 stuff
     initializer = tf.variance_scaling_initializer()
@@ -151,14 +145,12 @@ with tf.device("gpu"):
 
 
 n_games_per_update = 3
-n_max_steps = 1000
-n_iterations = 250
-save_iterations = 15
-discount_rate = 0.95
+n_iterations = 10000
+save_iterations = 30
 
 with tf.Session() as sess:
     init.run()
-    #saver.restore(sess, './iteration_90_mario.ckpt')
+    #saver.restore(sess, './iter9990_score_746_mario.ckpt')
     for iteration in range(n_iterations):
         print("\rIteration: {}".format(iteration), end="")
         all_rewards = []
@@ -171,8 +163,8 @@ with tf.Session() as sess:
             oldi = {'coins': 0, 'flag_get': False, 'life': 2, 'score': 0, 'stage': 1, 'status': 'small', 'time': 400, 'world': 1, 'x_pos': 40}
             while oldi['life'] == 2:
                 action_val, gradients_val = sess.run([action, gradients], feed_dict={X: obs.reshape(768, n_inputs)})
-                obs, rwd, done, info = env.step(action_val[0][0])
-                creward = reward(info, oldi)
+                obs, creward, done, info = env.step(action_val[0][0])
+                #creward = reward(info, oldi)
                 oldi = info
                 current_rewards.append(creward)
                 current_gradients.append(gradients_val)

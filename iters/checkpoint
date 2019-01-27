@@ -1,0 +1,2 @@
+model_checkpoint_path: "iter0_score_233_mario.ckpt"
+all_model_checkpoint_paths: "iter0_score_233_mario.ckpt"
