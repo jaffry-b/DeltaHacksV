@@ -187,7 +187,7 @@ with tf.Session() as sess:
             feed_dict[gradient_placeholder] = mean_gradients
         sess.run(training_op, feed_dict=feed_dict)
         if iteration % save_iterations == 0:
-            saver.save(sess, "./"+"iteration_"+Str(iteration)+"_mario".ckpt"+)
+            saver.save(sess, "./"+"iteration_"+Str(iteration)+"_mario".ckpt)
 env.close()
 
 
