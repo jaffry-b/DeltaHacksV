@@ -24,7 +24,7 @@ def reward(ninfo, pinfo):
 		flag = 15
 	if ninfo['life'] != pinfo['life']:
 		return -15
-	return ((ninfo['time']-pinfo['time']) + (ninfo['x_pos']-pinfo['x_pos']) + flag)
+	return ((ninfo['time']-pinfo['time']) + 3*(ninfo['x_pos']-pinfo['x_pos']) + flag)
 
 # 0.95 discount rate
 def discountrewards(rewards):
@@ -75,7 +75,7 @@ env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
 
 import numpy as np
 
-def reset_graph(seed=42):
+def reset_graph(seed=69):
     tf.reset_default_graph()
     tf.set_random_seed(seed)
     np.random.seed(seed)
@@ -93,8 +93,8 @@ with tf.device("gpu"):
     reset_graph()
 
     n_inputs = env.observation_space.shape[0]
-    n1_hidden = 10
-    n2_hidden = 10
+    n1_hidden = 25
+    n2_hidden = 15
     n3_hidden = 10
     n_outputs = 7# 7 stuff
     initializer = tf.variance_scaling_initializer()
@@ -150,14 +150,15 @@ with tf.device("gpu"):
 # In[9]:
 
 
-n_games_per_update = 10
+n_games_per_update = 3
 n_max_steps = 1000
 n_iterations = 250
-save_iterations = 10
+save_iterations = 15
 discount_rate = 0.95
 
 with tf.Session() as sess:
     init.run()
+    #saver.restore(sess, './iteration_90_mario.ckpt')
     for iteration in range(n_iterations):
         print("\rIteration: {}".format(iteration), end="")
         all_rewards = []
@@ -168,7 +169,7 @@ with tf.Session() as sess:
             obs = env.reset()
             done = False
             oldi = {'coins': 0, 'flag_get': False, 'life': 2, 'score': 0, 'stage': 1, 'status': 'small', 'time': 400, 'world': 1, 'x_pos': 40}
-            while not done:
+            while oldi['life'] == 2:
                 action_val, gradients_val = sess.run([action, gradients], feed_dict={X: obs.reshape(768, n_inputs)})
                 obs, rwd, done, info = env.step(action_val[0][0])
                 creward = reward(info, oldi)
@@ -187,7 +188,7 @@ with tf.Session() as sess:
             feed_dict[gradient_placeholder] = mean_gradients
         sess.run(training_op, feed_dict=feed_dict)
         if iteration % save_iterations == 0:
-            saver.save(sess, "./"+"iteration_"+Str(iteration)+"_mario".ckpt)
+            saver.save(sess, "./"+"iter"+str(iteration)+"_score_"+str(sum(current_rewards))+"_mario.ckpt")
 env.close()
 
 
